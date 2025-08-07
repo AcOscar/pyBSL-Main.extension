@@ -1,0 +1,19 @@
+title:
+  ru: 1212 Пакетное создание листов
+  fr_fr: 1212 Création de Feuilles en Groupe
+  en_us: 1212 Batch Sheet Maker
+  de_de: 1212 Plangenerator
+tooltip:
+  ru: >-
+    Введите наименование и номера листов в поле для ввода 
+    и данный скрипт создаст их все сразу.
+  fr_fr: >-
+    Entrez les noms et les numéros de feuilles dans la zone de texte et cet
+    outil les créera toutes
+  en_us: >-
+    Enter sheet names and numbers in the text box and this tool will create all
+    at once. The sheet number will also set to ID_Planliste!
+  de_de: >-
+    Geben Sie die Plannamen und -nummern in das Textfeld ein, und dieses Skript 
+    erstellt alle Pläne auf einmal. Die Plannummer wird gleichzeitig als ID-Planliste eingetragen!
+    
