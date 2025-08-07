@@ -1,10 +1,29 @@
+# Load secrets directly from client.env (im gleichen Ordner wie dieses Script)
+$dotenvPath = Join-Path -Path $PSScriptRoot -ChildPath "client.env"
+if (Test-Path $dotenvPath) {
+    # Lese alle Zeilen ein und filtere Kommentare
+    $secretLines = Get-Content $dotenvPath | Where-Object { $_ -and $_ -notmatch '^\s*#' }
+    # Erstelle Hashtable für Secrets
+    $secrets = @{}
+    foreach ($line in $secretLines) {
+        $parts = $line -split '=', 2
+        $key   = $parts[0].Trim()
+        $value = $parts[1].Trim()
+        $secrets[$key] = $value
+    }
+
+    # Weise ClientId und ClientSecret direkt zu
+    $ClientId     = $secrets['CLIENT_ID']
+    $ClientSecret = $secrets['CLIENT_SECRET']
+} else {
+    Write-Error "Secrets-Datei '$dotenvPath' nicht gefunden."
+}
+
 param (
     [string]$ProjectGuid,
     [string]$ItemUrn
 )
 
-$ClientId = "QXGVf1neHIouY41kH8o0TVGAPIPbQebbulB371893AD6AMqE"
-$ClientSecret = "eNAFwASrEs6mneWCY2GcVwIgmYhFnPX2RB3wbjvrWsp2ClwSx3gaW7DmsO9jpip4"
 $ProjectId = "b." + $ProjectGuid
 
 #Write-Output "Token wird geholt..."

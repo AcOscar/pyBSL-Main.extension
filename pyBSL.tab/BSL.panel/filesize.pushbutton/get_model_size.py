@@ -1,8 +1,8 @@
 import sys
 import requests
 
-CLIENT_ID = 'QXGVf1neHIouY41kH8o0TVGAPIPbQebbulB371893AD6AMqE'
-CLIENT_SECRET = 'eNAFwASrEs6mneWCY2GcVwIgmYhFnPX2RB3wbjvrWsp2ClwSx3gaW7DmsO9jpip4'
+CLIENT_ID = ''
+CLIENT_SECRET = ''
 
 # Argumente prüfen
 if len(sys.argv) != 3:
