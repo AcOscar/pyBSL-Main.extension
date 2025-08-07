@@ -1,0 +1,12 @@
+title:
+  ru: 1183
+  en_us: 1183
+  fr_fr: 1183
+  de_de: 1183
+layout:
+  - Aufschlag
+  - DoorPosNr Einbauort
+  - RNo
+  - TRH
+  - WallParamOfDoor
+
