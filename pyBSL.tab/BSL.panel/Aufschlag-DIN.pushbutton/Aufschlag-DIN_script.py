@@ -3,7 +3,7 @@ from Autodesk.Revit.DB import FilteredElementCollector as Fec
 from System.Diagnostics import Stopwatch
 from rpw import doc
 from pyrevit import script
-from pyrevit import revit, DB
+from pyrevit import revit, DB 
 
 #the door family needs a type parameter with the standard operation swing
 
@@ -58,10 +58,10 @@ if revit.active_view:
                     #print "HAH"
                     doors.append(selel)
     else:
-        print "nothing preselected"
+        print ("nothing preselected")
                 
     if len(doors) == 0:
-        print "get the whole model"
+        print ("get the whole model")
         doors = Fec(doc).OfCategory(BuiltInCategory.OST_Doors).WhereElementIsNotElementType().ToElements()
 
     doornums = len(doors) 
