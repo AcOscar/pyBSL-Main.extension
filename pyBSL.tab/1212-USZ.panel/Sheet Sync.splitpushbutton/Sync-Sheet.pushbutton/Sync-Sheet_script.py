@@ -60,6 +60,10 @@ PARAMETER_MAPPING = {
     # SHEET_GUIDE_GRID
     "Hilfslinienraster": BuiltInParameter.SHEET_GUIDE_GRID,
     "Guide Grid": BuiltInParameter.SHEET_GUIDE_GRID,
+
+    # SHEET_ISSUE_DATE
+    "Planausgabedatum": BuiltInParameter.SHEET_ISSUE_DATE,
+    "Sheet Issue Date": BuiltInParameter.SHEET_ISSUE_DATE,
 }
 
 def file_exists(path):
