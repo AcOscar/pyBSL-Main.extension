@@ -162,6 +162,8 @@ def prmset(element, param_name, value):
         #if bip == BuiltInParameter.SHEET_NAME:
         #    if re.search(r"[\\:{}\[\]¦;<>?`~]", value):
         #    print("⚠: Ungültige Zeichen gefunden ->", value)
+        if bip == BuiltInParameter.SHEET_ISSUE_DATE:
+            value = value.replace("/", ".")
     else:
         # Fallback zu LookupParameter, falls kein Mapping existiert
         param = element.LookupParameter(param_name)
