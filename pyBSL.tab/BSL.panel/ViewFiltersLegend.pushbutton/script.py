@@ -1,16 +1,48 @@
 # -*- coding: utf-8 -*-
 from pyrevit import forms
 from Autodesk.Revit.DB import *
-import clr
 
-clr.AddReference("RevitAPI")
-clr.AddReference("RevitServices")
+
+__title__ = 'ViewFilterLegend'
+__doc__ = 'Create a legend to all wall type filters from a view'
 
 doc = __revit__.ActiveUIDocument.Document
 uidoc = __revit__.ActiveUIDocument
 
+
+region_width_mm = 200
+region_height_mm = 50
+region_spacing_mm = 10
+text_type_name = "3.5mm Arial"
+
+
 def mm_to_feet(mm):
     return float(mm) / 304.8
+
+
+def get_textnotetype(doc, preferred_name="3.5mm Arial"):
+    # Collect all TextNoteTypes
+    types = list(FilteredElementCollector(doc).OfClass(TextNoteType))
+    if not types:
+        raise Exception("There is no TextNoteType in the project.")
+
+    # 1) Exact match (case insensitive) by name
+    want = preferred_name.strip().lower()
+    for t in types:
+        tname = (t.get_Parameter(BuiltInParameter.SYMBOL_NAME_PARAM).AsString() or "").strip().lower()
+        if tname == want:
+            return t
+
+    # 2) Fallback: Project setting (Default TextNoteType), if available
+    did = doc.GetDefaultElementTypeId(ElementTypeGroup.TextNoteType)
+    if did and did != ElementId.InvalidElementId:
+        dt = doc.GetElement(did)
+        if isinstance(dt, TextNoteType):
+            return dt
+
+    # 3) last fallback: first available
+    return types[0]
+
 
 # ============================
 # GET ALL VIEWS WITH FILTERS
@@ -40,25 +72,28 @@ if not selected_views:
 # ============================
 # SELECT TEXT STYLE
 # ============================
-text_types = FilteredElementCollector(doc).OfClass(TextNoteType).WhereElementIsElementType().ToElements()
+# text_types = FilteredElementCollector(doc).OfClass(TextNoteType).WhereElementIsElementType().ToElements()
 
-class TextTypeWrapper(object):
-    def __init__(self, text_type):
-        self.text_type = text_type
-        self.Name = text_type.get_Parameter(BuiltInParameter.ALL_MODEL_TYPE_NAME).AsString()
+# class TextTypeWrapper(object):
+#     def __init__(self, text_type):
+#         self.text_type = text_type
+#         self.Name = text_type.get_Parameter(BuiltInParameter.ALL_MODEL_TYPE_NAME).AsString()
 
-text_wrappers = [TextTypeWrapper(tt) for tt in text_types]
+# text_wrappers = [TextTypeWrapper(tt) for tt in text_types]
 
-selected_wrapper = forms.SelectFromList.show(
-    text_wrappers,
-    name_attr="Name",
-    title="Select Text Type"
-)
+# selected_wrapper = forms.SelectFromList.show(
+#     text_wrappers,
+#     name_attr="Name",
+#     title="Select Text Type"
+# )
 
-if not selected_wrapper:
-    forms.alert("No text style was selected. Canceling...", exitscript=True)
+# if not selected_wrapper:
+#     forms.alert("No text style was selected. Canceling...", exitscript=True)
 
-text_type = selected_wrapper.text_type
+# text_type = selected_wrapper.text_type
+
+
+text_type = get_textnotetype(doc, text_type_name)
 
 # ============================
 # SELECT VIEW LEGEND 
@@ -80,9 +115,9 @@ if not legend_view_selected:
 # ============================
 # REQUEST DIMENSIONS IN mm
 # ============================
-region_width_mm = forms.ask_for_string(default="200", prompt="Width FilledRegion (mm):")
-region_height_mm = forms.ask_for_string(default="50", prompt="Heigth FilledRegion (mm):")
-region_spacing_mm = forms.ask_for_string(default="10", prompt="Spacing FilledRegion (mm):")
+# region_width_mm = forms.ask_for_string(default="200", prompt="Width FilledRegion (mm):")
+# region_height_mm = forms.ask_for_string(default="50", prompt="Heigth FilledRegion (mm):")
+# region_spacing_mm = forms.ask_for_string(default="10", prompt="Spacing FilledRegion (mm):")
 
 try:
     region_width = mm_to_feet(float(region_width_mm))
@@ -101,12 +136,12 @@ for view in selected_views:
     new_legend_id = legend_view_selected.Duplicate(ViewDuplicateOption.WithDetailing)
     new_legend = doc.GetElement(new_legend_id)
 
-    #check if the name already exist adn count up in this case
+    # check if the name already exist and count up in this case
     base_name = "Legend_{}".format(view.Name)
     name = base_name
     counter = 1
 
-    # Prüfe, ob der Name bereits verwendet wird
+    # check if name already exists
     existing_names = [v.Name for v in legend_views] + \
         [v.Name for v in FilteredElementCollector(doc).OfClass(View).ToElements() if v.ViewType == ViewType.Legend]
 
@@ -114,6 +149,7 @@ for view in selected_views:
         name = "{} ({})".format(base_name, counter)
         counter += 1
 
+    print("New legend'{}': ".format(name))
     new_legend.Name = name
 
     # List visible walls
@@ -124,8 +160,11 @@ for view in selected_views:
             name = w.Name
             if name and name.strip():
                 wall_names.append(name)
+
         except:
             continue
+
+    wall_names = sorted(set(wall_names))
 
     print("Walls visible in the view'{}':".format(view.Name))
     if wall_names:
@@ -133,7 +172,7 @@ for view in selected_views:
             print(" - {}".format(name))
     else:
         print(" - (no visible walls)")
-
+        continue
     # Here you can add logic to create FilledRegions with colors from the filter if you want.
     x_origin = mm_to_feet(20)
     y_origin = mm_to_feet(20)
@@ -149,12 +188,11 @@ for view in selected_views:
     y_offset = 0
     wall_cat_id = ElementId(BuiltInCategory.OST_Walls)
 
-    print("View '{}' has {} Filters".format(view.Name, len(filters)))
+    #print("View '{}' has {} Filters".format(view.Name, len(filters)))
     for f_id in filters:
         # Filterelement holen
         filt = doc.GetElement(f_id)
         override = view.GetFilterOverrides(f_id)
-        print(filt.Name)
 
         if not filt or not isinstance(filt, ParameterFilterElement):
             continue  # not a parameter filter
@@ -164,6 +202,7 @@ for view in selected_views:
 
         if wall_cat_id not in categories:
             continue
+        print(" - {}".format(filt.Name))
 
         # rectangle position
         p1 = XYZ(x_origin, y_origin - y_offset, 0)
@@ -206,4 +245,4 @@ for view in selected_views:
         y_offset += region_height + region_spacing
 t.Commit()
 
-forms.alert(" Legends generated and lists of elements displayed in console.")
+#forms.alert(" Legends generated and lists of elements displayed in console.")
