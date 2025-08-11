@@ -135,7 +135,6 @@ for view in selected_views:
         print(" - (no visible walls)")
 
     # Here you can add logic to create FilledRegions with colors from the filter if you want.
-    # Startpunkt für die Platzierung der Regionen (z.B. unten links)
     x_origin = mm_to_feet(20)
     y_origin = mm_to_feet(20)
 
@@ -144,7 +143,7 @@ for view in selected_views:
         .FirstElement()
 
     if not region_type:
-        forms.alert("Kein FilledRegionType gefunden!", exitscript=True)
+        forms.alert("No FilledRegionType found!", exitscript=True)
 
     filters = view.GetFilters()
     y_offset = 0
@@ -156,21 +155,17 @@ for view in selected_views:
         filt = doc.GetElement(f_id)
         override = view.GetFilterOverrides(f_id)
         print(filt.Name)
-        # Nur verarbeiten, wenn Wände betroffen sind
-        if not filt or not isinstance(filt, ParameterFilterElement):
-            continue  # kein Klassischer Filter
 
-        # Gehe sicher, dass Wände von dem Filter betroffen sind
+        if not filt or not isinstance(filt, ParameterFilterElement):
+            continue  # not a parameter filter
+
+        # Make sure that walls are affected by the filter.
         categories = filt.GetCategories()
 
         if wall_cat_id not in categories:
             continue
-        # Farbwert prüfen
-        #color = override.SurfaceForegroundPatternColor if override else None
-        #if not color:
-        #    continue
 
-        # Rechteck-Position
+        # rectangle position
         p1 = XYZ(x_origin, y_origin - y_offset, 0)
         p2 = XYZ(x_origin + region_width, y_origin - y_offset, 0)
         p3 = XYZ(x_origin + region_width, y_origin - y_offset + region_height, 0)
@@ -203,7 +198,7 @@ for view in selected_views:
 
         new_legend.SetElementOverrides(region.Id, g_override)
 
-        # Textnote neben die Fläche
+        # Textnote next to the area
         text_point = XYZ(p2.X + mm_to_feet(10), (p2.Y + p3.Y) / 2, 0)
         label_text = filt.Name
         TextNote.Create(doc, new_legend.Id, text_point, label_text, text_type.Id)
