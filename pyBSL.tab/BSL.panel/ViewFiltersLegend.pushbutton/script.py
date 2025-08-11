@@ -38,7 +38,7 @@ if not selected_views:
     forms.alert("No views were selected. Canceling...", exitscript=True)
 
 # ============================
-# SELECT TEXT STYLEXTO
+# SELECT TEXT STYLE
 # ============================
 text_types = FilteredElementCollector(doc).OfClass(TextNoteType).WhereElementIsElementType().ToElements()
 
@@ -98,30 +98,23 @@ t = Transaction(doc, "Generate Legend with Filters")
 t.Start()
 
 for view in selected_views:
-    new_legend_id = legend_view_selected.Duplicate(ViewDuplicateOption.Duplicate)
+    new_legend_id = legend_view_selected.Duplicate(ViewDuplicateOption.WithDetailing)
     new_legend = doc.GetElement(new_legend_id)
-    new_legend.Name = "Legend_{}".format(view.Name)
 
-    # Show visible elements in console
-    print("\n🔍 View: {}".format(view.Name))
-    print("Visible elements:")
+    #check if the name already exist adn count up in this case
+    base_name = "Legend_{}".format(view.Name)
+    name = base_name
+    counter = 1
 
-    collector = FilteredElementCollector(doc, view.Id).WhereElementIsNotElementType().ToElements()
-    element_names = []
+    # Prüfe, ob der Name bereits verwendet wird
+    existing_names = [v.Name for v in legend_views] + \
+        [v.Name for v in FilteredElementCollector(doc).OfClass(View).ToElements() if v.ViewType == ViewType.Legend]
 
-    for el in collector:
-        try:
-            name = el.Name
-            if name and name.strip():
-                element_names.append(name)
-        except:
-            continue
+    while name in existing_names:
+        name = "{} ({})".format(base_name, counter)
+        counter += 1
 
-    if not element_names:
-        print(" - (nno visible elements with name)")
-    else:
-        for name in element_names:
-            print(" - {}".format(name))
+    new_legend.Name = name
 
     # List visible walls
     walls_collector = FilteredElementCollector(doc, view.Id).OfCategory(BuiltInCategory.OST_Walls).WhereElementIsNotElementType().ToElements()
@@ -142,7 +135,80 @@ for view in selected_views:
         print(" - (no visible walls)")
 
     # Here you can add logic to create FilledRegions with colors from the filter if you want.
+    # Startpunkt für die Platzierung der Regionen (z.B. unten links)
+    x_origin = mm_to_feet(20)
+    y_origin = mm_to_feet(20)
 
+    region_type = FilteredElementCollector(doc)\
+        .OfClass(FilledRegionType)\
+        .FirstElement()
+
+    if not region_type:
+        forms.alert("Kein FilledRegionType gefunden!", exitscript=True)
+
+    filters = view.GetFilters()
+    y_offset = 0
+    wall_cat_id = ElementId(BuiltInCategory.OST_Walls)
+
+    print("View '{}' has {} Filters".format(view.Name, len(filters)))
+    for f_id in filters:
+        # Filterelement holen
+        filt = doc.GetElement(f_id)
+        override = view.GetFilterOverrides(f_id)
+        print(filt.Name)
+        # Nur verarbeiten, wenn Wände betroffen sind
+        if not filt or not isinstance(filt, ParameterFilterElement):
+            continue  # kein Klassischer Filter
+
+        # Gehe sicher, dass Wände von dem Filter betroffen sind
+        categories = filt.GetCategories()
+
+        if wall_cat_id not in categories:
+            continue
+        # Farbwert prüfen
+        #color = override.SurfaceForegroundPatternColor if override else None
+        #if not color:
+        #    continue
+
+        # Rechteck-Position
+        p1 = XYZ(x_origin, y_origin - y_offset, 0)
+        p2 = XYZ(x_origin + region_width, y_origin - y_offset, 0)
+        p3 = XYZ(x_origin + region_width, y_origin - y_offset + region_height, 0)
+        p4 = XYZ(x_origin, y_origin - y_offset + region_height, 0)
+
+        loop = CurveLoop()
+        loop.Append(Line.CreateBound(p1, p2))
+        loop.Append(Line.CreateBound(p2, p3))
+        loop.Append(Line.CreateBound(p3, p4))
+        loop.Append(Line.CreateBound(p4, p1))
+
+        # FilledRegion
+        region = FilledRegion.Create(doc, region_type.Id, new_legend.Id, [loop])
+
+        cfg_pattern_id = override.CutForegroundPatternId if override else None
+        cfg_color = override.CutForegroundPatternColor if override else None
+        cbg_pattern_id = override.CutBackgroundPatternId if override else None
+        cbg_color = override.CutBackgroundPatternColor if override else None
+
+        g_override = OverrideGraphicSettings()
+
+        if cfg_pattern_id != ElementId.InvalidElementId:
+            g_override.SetSurfaceForegroundPatternId (cfg_pattern_id)
+        if cfg_color != ElementId.InvalidElementId:
+            g_override.SetSurfaceForegroundPatternColor (cfg_color)
+        if cbg_pattern_id != ElementId.InvalidElementId:
+            g_override.SetSurfaceBackgroundPatternId (cbg_pattern_id)
+        if cbg_color != ElementId.InvalidElementId:
+            g_override.SetSurfaceBackgroundPatternColor (cbg_color)
+
+        new_legend.SetElementOverrides(region.Id, g_override)
+
+        # Textnote neben die Fläche
+        text_point = XYZ(p2.X + mm_to_feet(10), (p2.Y + p3.Y) / 2, 0)
+        label_text = filt.Name
+        TextNote.Create(doc, new_legend.Id, text_point, label_text, text_type.Id)
+
+        y_offset += region_height + region_spacing
 t.Commit()
 
 forms.alert(" Legends generated and lists of elements displayed in console.")
