@@ -1,12 +1,14 @@
-# Load secrets directly from client.env (im gleichen Ordner wie dieses Script)
+# Load secrets directly from client.env (same folder as this script)
 # the user.env has content like:
 # CLIENT_ID=AKNS4zhkILkwpt62m56v0w1agw2kgKc4amKrl5
 # CLIENT_SECRET=Gh6KliQsfZbkuWjQoPD5WcNMaf267dAcILkwpt62m56v0wamtdlw3
+
 $dotenvPath = Join-Path -Path $PSScriptRoot -ChildPath "client.env"
+
 if (Test-Path $dotenvPath) {
-    # Lese alle Zeilen ein und filtere Kommentare
+    # read all rows and filter comments
     $secretLines = Get-Content $dotenvPath | Where-Object { $_ -and $_ -notmatch '^\s*#' }
-    # Erstelle Hashtable für Secrets
+    # creating hash table for secrets
     $secrets = @{}
     foreach ($line in $secretLines) {
         $parts = $line -split '=', 2
@@ -15,21 +17,17 @@ if (Test-Path $dotenvPath) {
         $secrets[$key] = $value
     }
 
-    # Weise ClientId und ClientSecret direkt zu
+    # Directly assign ClientId and ClientSecret
     $ClientId     = $secrets['CLIENT_ID']
     $ClientSecret = $secrets['CLIENT_SECRET']
 } else {
-    Write-Error "Secrets-Datei '$dotenvPath' nicht gefunden."
+    Write-Error "Error: Secrets-file '$dotenvPath' not found."
 }
 
-param (
-    [string]$ProjectGuid,
-    [string]$ItemUrn
-)
+$ProjectGuid = $args[0]  # argument 1
+$ItemUrn = $args[1]      # argument 2
 
 $ProjectId = "b." + $ProjectGuid
-
-#Write-Output "Token wird geholt..."
 
 $body = @{
     client_id     = $ClientId
@@ -46,21 +44,17 @@ try {
 
     $accessToken = $tokenResponse.access_token
 
-    #if (-not $accessToken) {
-    #    Write-Output "Kein Zugriffstoken erhalten."
-    #    exit 1
-    #}
+    if (-not $accessToken) {
+       Write-Output "Error: No access token received."
+       exit 1
+    }
 
-    #Write-Output "Zugriffstoken empfangen."
 }
 catch {
-    #Write-Output "Fehler beim Tokenabruf:"
-    #Write-Output $_
+    Write-Output "Error: Retrieving token:"
+    Write-Output $_
     exit 1
 }
-
-# Modellversionen abfragen
-#Write-Output "Hole Modellversionen..."
 
 $headers = @{ Authorization = "Bearer $accessToken" }
 $url = "https://developer.api.autodesk.com/data/v1/projects/$ProjectId/items/$ItemUrn/versions"
@@ -70,21 +64,18 @@ try {
     $latest = $versions.data[0]
 
     if ($null -eq $latest) {
-        #Write-Output "Keine Versionen gefunden."
         exit 1
     }
 
     $size = $latest.attributes.storageSize
     if ($size) {
-        $sizeMB = ($size)
         Write-Output "$size"
     }
     else {
-        #Write-Output "Keine Dateigröße verfügbar (in Version)."
         Write-Output "-"
     }
 }
 catch {
-    Write-Output "Fehler beim Datenabruf:"
+    Write-Output "Error: during data calling:"
     Write-Output $_
 }
