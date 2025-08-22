@@ -1,0 +1,60 @@
+<Window x:Class="SelectFromListWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Auswahl" Height="520" Width="420"
+        ResizeMode="CanResize" 
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+    
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="12,4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="MinWidth" Value="75"/>
+        </Style>
+        <Style TargetType="Label">
+            <Setter Property="Padding" Value="0,0,0,4"/>
+        </Style>
+    </Window.Resources>
+    
+    <DockPanel Margin="10">
+        
+        <!-- Suchbereich (oben) -->
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+            <Label Content="Suche:" />
+            <TextBox x:Name="SearchTextBox" 
+                     Padding="4" 
+                     FontSize="12"/>
+        </StackPanel>
+        
+        <!-- Button-Bereich (unten) -->
+        <StackPanel DockPanel.Dock="Bottom" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right"
+                    Margin="0,10,0,0">
+            <Button x:Name="CancelButton" Content="Abbrechen" />
+            <Button x:Name="OkButton" 
+                    Content="OK" 
+                    IsDefault="True"
+                    Style="{StaticResource {x:Static SystemParameters.DefaultButtonStyleKey}}" />
+        </StackPanel>
+        
+        <!-- Liste (füllt den Rest) -->
+        <ListBox x:Name="ItemsListBox" 
+                 SelectionMode="Single"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto">
+            
+            <!-- Template für bessere Darstellung der Tupel -->
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Path=[0]}" 
+                               Padding="2"
+                               ToolTip="{Binding Path=[0]}"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+            
+        </ListBox>
+        
+    </DockPanel>
+</Window>
