@@ -264,7 +264,7 @@ print ("File: {}\nRange: {}\nKeyName: {}".format(excel_filename, excel_rangename
 temp_dir = os.environ.get('TEMP')
 
 fileCsvDrawinglist = os.path.join(temp_dir,'temp-drawing-list.csv')
-print fileCsvDrawinglist
+print (fileCsvDrawinglist)
 batch_file = '{}'.format(os.path.dirname(__file__) + '\convert3.bat')
 
 # Convert xls to temp csv files.
