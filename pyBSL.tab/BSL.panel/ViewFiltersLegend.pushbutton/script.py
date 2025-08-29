@@ -24,7 +24,7 @@ region_spacing_mm = 200
 text_distance_x_mm = 1100
 text_distance_y_mm = 175
 text2_distance_mm = 4000
-text_type_name = "Arial_normal_schwarz_1.5mm"
+text_type_name_default = "Arial_normal_schwarz_1.5mm"
 
 unsupported = set([
     ViewType.ProjectBrowser,
@@ -39,6 +39,16 @@ unsupported = set([
 
 def mm_to_feet(mm):
     return float(mm) / 304.8
+
+def get_textnotetypenames(doc):
+    text_note_types_names = []
+    types = list(FilteredElementCollector(doc).OfClass(TextNoteType))
+    for t in types:
+        tname = (t.get_Parameter(BuiltInParameter.SYMBOL_NAME_PARAM).AsString() or "").strip()
+        if tname:
+            text_note_types_names.append(tname)
+    return text_note_types_names
+
 
 def get_textnotetype(doc, preferred_name="3.5mm Arial"):
     # Collect all TextNoteTypes
@@ -145,6 +155,10 @@ for v in FilteredElementCollector(doc).OfClass(View).WhereElementIsNotElementTyp
 if not safe_views:
     forms.alert("No eligible views found.", exitscript=True)
 
+# Aktuelle View ermitteln
+current_view = doc.ActiveView
+current_view_label = None
+
 # schlanke Items: Label -> ElementId
 items = []
 id_by_label = {}
@@ -159,11 +173,15 @@ for v in safe_views:
         items.append(label)
         id_by_label[label] = v.Id
 
+        # Prüfen ob dies die aktuelle View ist
+        if v.Id == current_view.Id:
+            current_view_label = label
+
 selected_labels = forms.SelectFromList.show(
     items,
     multiselect=True,
-    title="Select Views (filters will be checked after selection)"
-)
+    title="Select Views (filters will be checked after selection)",
+   )
 
 if not selected_labels:
     forms.alert("No views were selected. Canceling...", exitscript=True)
@@ -182,7 +200,19 @@ for v in selected_views:
 if not views_with_filters:
     forms.alert("Selected views have no filters.", exitscript=True)
 
-text_type = get_textnotetype(doc, text_type_name)
+texttypesn = get_textnotetypenames(doc)
+text_type_name = []
+text_type_name = forms.SelectFromList.show(
+    texttypesn,
+    multiselect=True,
+    title="Select text type"
+)
+
+if not text_type_name:
+    text_type_name = []
+    text_type_name.append(text_type_name_default)
+
+text_type = get_textnotetype(doc, text_type_name[0])
 
 # ============================
 # SELECT VIEW LEGEND 
@@ -205,9 +235,9 @@ if not legend_view_selected:
 # ============================
 # REQUEST DIMENSIONS IN mm
 # ============================
-# region_width_mm = forms.ask_for_string(default="200", prompt="Width FilledRegion (mm):")
-# region_height_mm = forms.ask_for_string(default="50", prompt="Heigth FilledRegion (mm):")
-# region_spacing_mm = forms.ask_for_string(default="10", prompt="Spacing FilledRegion (mm):")
+region_width_mm = forms.ask_for_string(default=str(region_width_mm), prompt="Width FilledRegion (mm):")
+region_height_mm = forms.ask_for_string(default=(str(region_height_mm)), prompt="Heigth FilledRegion (mm):")
+region_spacing_mm = forms.ask_for_string(default=str(region_spacing_mm), prompt="Spacing FilledRegion (mm):")
 
 try:
     region_width = mm_to_feet(float(region_width_mm))
