@@ -306,7 +306,7 @@ for sheet in sheets:
 
     key_value = get_str_param(sheet, excel_keyname)
     #print (key_value)
-
+    
     if str(rdb.WorksharingUtils.GetCheckoutStatus(doc, sheet.Id)) == 'OwnedByOtherUser':
         #print('Sheet ' + nr + ' is used by another user and will not be updated!')
         print output.linkify(sheet.Id) + " " + nr + " is used by another user and will not be updated!" 
