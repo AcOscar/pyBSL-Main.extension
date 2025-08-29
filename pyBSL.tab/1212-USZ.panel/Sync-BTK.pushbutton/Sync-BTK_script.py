@@ -47,6 +47,33 @@ def get_project_info(doc):
         .OfCategory(BuiltInCategory.OST_ProjectInformation) \
         .FirstElement()
 
+def get_onedrive_root(tenant, team, folder_list):
+    """
+    Ermittelt den lokalen OneDrive-Root.
+    """ 
+    user_profile = os.environ.get("USERPROFILE")
+    if not user_profile:
+        print("ERROR: USERPROFILE environment variable not found")
+        return None
+
+    ondr = ["","OneDrive - "]
+    for dr in ondr:
+        for folder in folder_list:
+            rel = folder.lstrip("\\/")
+            if dr == "":
+                 rel = f"{team} - {rel}"
+                 test_root = os.path.join(user_profile,f"{tenant}",rel)
+            else:
+                rel = f"{rel} - {team}"
+                test_root = os.path.join(user_profile,f"{dr}{tenant}",rel)
+
+            if  os.path.isdir(test_root):
+
+                return test_root
+
+    return None
+
+
 def read_json_from_project_param(doc, param_name):
     pi = get_project_info(doc)
     if not pi:
@@ -74,18 +101,104 @@ def get_onedrive_config(cfg):
         cfg (dict): Configuration dictionary
         
     Returns:
-        tuple: (team_name, library_name)
+        tuple: (tenant, team, local_paths)
     """
     onedrive_config = cfg.get("OneDriveConfig", {})
     
     # Default values (current hardcoded values)
-    default_team = ""
-    default_library = ""
+    # default_team = ""
+    # default_library = ""
+    # team_name = onedrive_config.get( "TeamsLocalPaths", "")
+
+    # library_name = onedrive_config.get("LibraryName", default_library)
+    Tenant = onedrive_config.get("Tenant","")
+    Team = onedrive_config.get("Team","")
+    LocalPaths = onedrive_config.get("LocalPaths",[])
     
-    team_name = onedrive_config.get("TeamName", default_team)
-    library_name = onedrive_config.get("LibraryName", default_library)
-    
-    return team_name, library_name
+    return Tenant,Team,LocalPaths
+
+# def _normpath(p: str) -> str:
+#     return os.path.normpath(p)
+
+# def list_synced_libraries(root: Optional[str] = None) -> List[str]:
+#     """Listet alle Top-Level-Ordner im OneDrive-Root auf, die wie
+#     synchronisierte SharePoint/Teams-Bibliotheken aussehen:
+#       "<Irgendwas> - <Irgendwas>"
+#     """
+#     root = root or get_onedrive_root(True)
+#     if not root or not os.path.isdir(root):
+#         return []
+#     # OneDrive legt pro Bibliothek einen Ordner an, der in der Regel ein '-' enthält.
+#     # Wir filtern auf Ordner mit ' - ' im Namen.
+
+#     entries = []
+#     try:
+#         for name in os.listdir(root):
+#             full = os.path.join(root, name)
+#             if os.path.isdir(full) and " - " in name:
+#                 entries.append(_normpath(full))
+#     except Exception:
+#         pass
+
+#     print("entries")
+#     print(entries)
+
+#     return sorted(entries)
+
+# def get_team_path(team_name: str, root: Optional[str] = None) -> Optional[str]:
+#     """Gibt den Pfad zur synchronisierten Bibliothek eines Teams zurück.
+#     Beispiel:
+#       team_name="1212_USZ" →
+#         C:\\Users\\<user>\\Christ & Gantenbein\\1212_USZ - Documents   (EN)
+#         C:\\Users\\<user>\\Christ & Gantenbein\\1212_USZ - Dokumente   (DE)
+#         C:\\Users\\<user>\\Christ & Gantenbein\\1212_USZ - Documentos  (ES)
+#     Achtung:
+#       - Liefert den *Bibliotheks*-Root (nicht den Channel-Unterordner).
+#       - Wenn mehrere Treffer existieren (selten), wird der erste zurückgegeben.
+#     """
+#     if not team_name:
+#         return None
+#     root = root or get_onedrive_root(True)
+
+#     if not root or not os.path.isdir(root):
+#         return None
+
+#     # Exakter Prefix-Match "<Team> - *"
+#     pattern = os.path.join(root, f"{team_name} - *")
+#     matches = glob.glob(pattern)
+#     # Falls der Teamname Sonderzeichen/Leerzeichen enthält, kann es doppelte Spaces o.ä. geben;
+#     # zusätzlich eine etwas tolerantere Suche:
+
+#     print("root")
+#     print(matches)
+#     if not matches:
+#         lo = team_name.lower()
+#         candidates = list_synced_libraries(root)
+#         matches = [p for p in candidates if os.path.basename(p).lower().startswith(lo + " - ")]
+
+#     if not matches:
+#         return None
+#     # Im Normalfall gibt es genau einen Treffer:
+#     return _normpath(matches[0])
+
+# def get_channel_folder(team_name: str,
+#                        channel: str = "General",
+#                        root: Optional[str] = None,
+#                        ensure_exists: bool = False) -> Optional[str]:
+#     """Gibt den Pfad zum Channel-Unterordner zurück (z. B. 'General').
+#     Viele Workflows in Teams landen unter:
+#       <Team> - <DocumentsLocalized>\\<ChannelName>\\...
+#     """
+#     base = get_team_path(team_name, root=root)
+#     if not base:
+#         return None
+#     channel_path = os.path.join(base, channel)
+#     if ensure_exists and not os.path.isdir(channel_path):
+#         try:
+#             os.makedirs(channel_path)
+#         except Exception:
+#             pass
+#     return _normpath(channel_path) if os.path.isdir(os.path.dirname(channel_path)) else None
 
 def ensure_list(value):
     """if value is a Dict  -> [value], if None -> [], else value return."""
@@ -683,15 +796,20 @@ def main():
         return
 
     # Get OneDrive configuration
-    team_name, library_name = get_onedrive_config(cfg_raw)
-    
+    # teams_root = get_onedrive_config(cfg_raw)
+    tenant, team, local_paths = get_onedrive_config(cfg_raw)
+
     output.print_md("OneDrive Configuration:")
-    output.print_md("  Team Name: {}".format(team_name))
-    output.print_md("  Library Name: {}".format(library_name))
+    output.print_md("  Tenant: {}".format(tenant))
+    output.print_md("  Team: {}".format(team))
+    # output.print_md("  local_paths: {}".format(local_paths))
+    
+    onedrive_root = get_onedrive_root(tenant, team, local_paths)
+    output.print_md("  Local Root: {}".format(onedrive_root))
     output.print_md("-" * 50)
     params = cfg["ParameterSync"]
 
-    print("=== Excel Parameter Sync ({} Entries) ===".format(len(params)))
+    output.print_md("=== Excel Parameter Sync ({} Entries) ===".format(len(params)))
     
     # Sort numerically by order (order is string -> convert to int, fallback 0)
     def order_key(x):
@@ -704,51 +822,53 @@ def main():
         excel_filename = item.get("FileName")
         excel_rangename = item.get("DataName")
         excel_keyname = item.get("KeyName")
-        filter_categories = item.get("Filter", "")
+        filter_categories = item.get("BuiltInCategory", "")
         sync_type = item.get("Type", "Instance")
 
-        print("\n Order    : {}".format(item.get("Order")))
-        print("  FileName : {}".format(excel_filename))
-        print("  DataName : {}".format(excel_rangename))
-        print("  KeyName  : {}".format(excel_keyname))
-        print("  Filter   : {}".format(filter_categories))
-        print("  Type     : {}".format(sync_type))
+        output.print_md("-" * 50)
+        output.print_md(" Order\t: {}".format(item.get("Order")))
+        output.print_md("-  FileName\t: {}".format(excel_filename))
+        output.print_md("-  DataName\t: {}".format(excel_rangename))
+        output.print_md("-  KeyName \t: {}".format(excel_keyname))
+        output.print_md("-  Category\t: {}".format(filter_categories))
+        output.print_md("-  Type\t\t\t: {}".format(sync_type))
+        output.print_md("-" * 50)
 
         # Parse categories from filter string
         if not filter_categories:
-            print("  WARNING: No filter categories specified - skipping")
+            output.print_md("  WARNING: No filter categories specified - skipping")
             continue
             
         categories = parse_builtin_categories(filter_categories)
         if not categories:
-            print("  WARNING: No valid categories found - skipping")
+            output.print_md("  WARNING: No valid categories found - skipping")
             continue
 
         # Check for pre-selected elements first
-        print("  Checking for selected elements...")
+        output.print_md("  Checking for selected elements...")
         selected_elements = get_selected_elements(uidoc, categories)
         
         if selected_elements:
-            print("  Using {} pre-selected elements".format(len(selected_elements)))
+            output.print_md("  Using {} pre-selected elements".format(len(selected_elements)))
             elements = selected_elements
             selected_views = None
         else:
-            print("  No relevant elements selected - proceeding with view selection")
+            output.print_md("  No relevant elements selected - proceeding with view selection")
             
             # Select views for processing
             # selected_views = select_views_for_processing(doc, uidoc)
             selected_views  = [uidoc.ActiveView]
 
             if not selected_views:
-                print("  No views selected - skipping this sync item")
+                output.print_md("  No views selected - skipping this sync item")
                 continue
             
-            print("  Selected {} views for processing".format(len(selected_views)))
+            output.print_md("  Selected {} views for processing".format(len(selected_views)))
             for view in selected_views:
-                print("    - {}".format(view.Name))
+                output.print_md("    - {}".format(view.Name))
             
             # Collect elements from selected views
-            print("  Collecting elements from selected views...")
+            output.print_md("  Collecting elements from selected views...")
             elements = collect_elements_by_categories_in_views(doc, categories, selected_views)
 
         output.print_md("Total elements for processing: {}".format(len(elements)))
@@ -757,15 +877,6 @@ def main():
             output.print_md("WARNING: No elements found for the specified categories")
             continue
 
-        # getting USERPROFILE
-        user_profile = os.environ.get("USERPROFILE")
-        if not user_profile:
-            output.print_md("ERROR: USERPROFILE environment variable not found")
-            continue
-            
-        # Base folder for OneDrive sync (customize team name + library name!)
-        # onedrive_root = os.path.join(user_profile, r"Christ & Gantenbein", r"1212_USZ - Documents")
-        onedrive_root = os.path.join(user_profile, team_name, library_name)
         # convert SharePoint URL to local path
         try:
             excel_file_local_path = sp_url_to_local_path(excel_filename, onedrive_root)
@@ -806,8 +917,6 @@ def main():
             #if 'elements' not in locals():
             #    output.print_md("Collecting Revit elements...")
             #    elements = collect_elements_by_categories_in_views(doc, categories)
-            
-
             
             # Synchronize parameters
             output.print_md("Starting parameter synchronization...")
