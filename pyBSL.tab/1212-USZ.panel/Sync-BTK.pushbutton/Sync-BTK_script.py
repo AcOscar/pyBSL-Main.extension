@@ -73,7 +73,6 @@ def get_onedrive_root(tenant, team, folder_list):
 
     return None
 
-
 def read_json_from_project_param(doc, param_name):
     pi = get_project_info(doc)
     if not pi:
@@ -116,89 +115,6 @@ def get_onedrive_config(cfg):
     LocalPaths = onedrive_config.get("LocalPaths",[])
     
     return Tenant,Team,LocalPaths
-
-# def _normpath(p: str) -> str:
-#     return os.path.normpath(p)
-
-# def list_synced_libraries(root: Optional[str] = None) -> List[str]:
-#     """Listet alle Top-Level-Ordner im OneDrive-Root auf, die wie
-#     synchronisierte SharePoint/Teams-Bibliotheken aussehen:
-#       "<Irgendwas> - <Irgendwas>"
-#     """
-#     root = root or get_onedrive_root(True)
-#     if not root or not os.path.isdir(root):
-#         return []
-#     # OneDrive legt pro Bibliothek einen Ordner an, der in der Regel ein '-' enthält.
-#     # Wir filtern auf Ordner mit ' - ' im Namen.
-
-#     entries = []
-#     try:
-#         for name in os.listdir(root):
-#             full = os.path.join(root, name)
-#             if os.path.isdir(full) and " - " in name:
-#                 entries.append(_normpath(full))
-#     except Exception:
-#         pass
-
-#     print("entries")
-#     print(entries)
-
-#     return sorted(entries)
-
-# def get_team_path(team_name: str, root: Optional[str] = None) -> Optional[str]:
-#     """Gibt den Pfad zur synchronisierten Bibliothek eines Teams zurück.
-#     Beispiel:
-#       team_name="1212_USZ" →
-#         C:\\Users\\<user>\\Christ & Gantenbein\\1212_USZ - Documents   (EN)
-#         C:\\Users\\<user>\\Christ & Gantenbein\\1212_USZ - Dokumente   (DE)
-#         C:\\Users\\<user>\\Christ & Gantenbein\\1212_USZ - Documentos  (ES)
-#     Achtung:
-#       - Liefert den *Bibliotheks*-Root (nicht den Channel-Unterordner).
-#       - Wenn mehrere Treffer existieren (selten), wird der erste zurückgegeben.
-#     """
-#     if not team_name:
-#         return None
-#     root = root or get_onedrive_root(True)
-
-#     if not root or not os.path.isdir(root):
-#         return None
-
-#     # Exakter Prefix-Match "<Team> - *"
-#     pattern = os.path.join(root, f"{team_name} - *")
-#     matches = glob.glob(pattern)
-#     # Falls der Teamname Sonderzeichen/Leerzeichen enthält, kann es doppelte Spaces o.ä. geben;
-#     # zusätzlich eine etwas tolerantere Suche:
-
-#     print("root")
-#     print(matches)
-#     if not matches:
-#         lo = team_name.lower()
-#         candidates = list_synced_libraries(root)
-#         matches = [p for p in candidates if os.path.basename(p).lower().startswith(lo + " - ")]
-
-#     if not matches:
-#         return None
-#     # Im Normalfall gibt es genau einen Treffer:
-#     return _normpath(matches[0])
-
-# def get_channel_folder(team_name: str,
-#                        channel: str = "General",
-#                        root: Optional[str] = None,
-#                        ensure_exists: bool = False) -> Optional[str]:
-#     """Gibt den Pfad zum Channel-Unterordner zurück (z. B. 'General').
-#     Viele Workflows in Teams landen unter:
-#       <Team> - <DocumentsLocalized>\\<ChannelName>\\...
-#     """
-#     base = get_team_path(team_name, root=root)
-#     if not base:
-#         return None
-#     channel_path = os.path.join(base, channel)
-#     if ensure_exists and not os.path.isdir(channel_path):
-#         try:
-#             os.makedirs(channel_path)
-#         except Exception:
-#             pass
-#     return _normpath(channel_path) if os.path.isdir(os.path.dirname(channel_path)) else None
 
 def ensure_list(value):
     """if value is a Dict  -> [value], if None -> [], else value return."""
@@ -713,7 +629,6 @@ def sync_parameters_to_elements(doc, elements, excel_data_dict, key_param_name, 
     output.print_md("Parameter errors: {}".format(stats['errors']))
     output.print_md("Warnings: {}".format(stats['warnings']))
 
-def format_data_for_output(data):
     """
     Formats the data for output in the PyRevit window.
     
@@ -853,7 +768,9 @@ def main():
             elements = selected_elements
             selected_views = None
         else:
-            output.print_md("  No relevant elements selected - proceeding with view selection")
+            output.print_md("Nothing selected, please selct elements before")
+            """
+             output.print_md("  No relevant elements selected - proceeding with view selection")
             
             # Select views for processing
             # selected_views = select_views_for_processing(doc, uidoc)
@@ -869,7 +786,8 @@ def main():
             
             # Collect elements from selected views
             output.print_md("  Collecting elements from selected views...")
-            elements = collect_elements_by_categories_in_views(doc, categories, selected_views)
+            elements = collect_elements_by_categories_in_views(doc, categories, selected_views) 
+            """
 
         output.print_md("Total elements for processing: {}".format(len(elements)))
 
@@ -912,11 +830,6 @@ def main():
             # Convert Excel data to lookup dictionary
             excel_lookup = convert_excel_data_to_dict(data, excel_keyname)
             output.print_md("Excel lookup dictionary created with {} entries".format(len(excel_lookup)))
-            
-            # Collect Revit elements
-            #if 'elements' not in locals():
-            #    output.print_md("Collecting Revit elements...")
-            #    elements = collect_elements_by_categories_in_views(doc, categories)
             
             # Synchronize parameters
             output.print_md("Starting parameter synchronization...")
