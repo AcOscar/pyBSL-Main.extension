@@ -16,10 +16,6 @@ from Autodesk.Revit.DB import StorageType, ViewType, View
 
 from urllib.parse import urlparse, unquote
 
-# sys.path.append(os.path.join(os.path.dirname(__file__), "..", "lib"))
-
-# from wpf_select import select_from_list_xaml
-
 uidoc = __revit__.ActiveUIDocument
 doc = uidoc.Document
 PARAM_NAME = "ExcelReader"
