@@ -20,6 +20,13 @@ uidoc = __revit__.ActiveUIDocument
 doc = uidoc.Document
 PARAM_NAME = "ExcelReader"
 
+# CPython-Module for Excel
+try:
+    import openpyxl
+except ImportError:
+    print("ERROR: openpyxl is not installed.")
+    sys.exit(1)
+
 # Simplified version without pyrevit.script import
 class SimpleOutput:
     def print_md(self, text):
@@ -28,13 +35,6 @@ class SimpleOutput:
     def __call__(self):
         return self
     
-# CPython-Module for Excel
-try:
-    import openpyxl
-except ImportError:
-    print("ERROR: openpyxl is not installed.")
-    sys.exit(1)
-
 # ---------------------------
 # Utils
 # ---------------------------
@@ -160,7 +160,7 @@ def parse_builtin_categories(filter_string):
             # Get the BuiltInCategory enum value
             builtin_cat = getattr(BuiltInCategory, cat_name)
             categories.append(builtin_cat)
-            print("  Added category filter: {}".format(cat_name))
+            # print("  Added category filter: {}".format(cat_name))
         except AttributeError:
             print("  WARNING: Unknown category '{}' - skipping".format(cat_name))
     
@@ -555,9 +555,9 @@ def sync_parameters_to_elements(doc, elements, excel_data_dict, key_param_name, 
     sample_row = next(iter(excel_data_dict.values()))
     available_params = [k for k in sample_row.keys() if k != key_param_name]
     
-    output.print_md("Available parameters from Excel: {}".format(", ".join(available_params)))
-    output.print_md("Key parameter: {}".format(key_param_name))
-    output.print_md("-" * 50)
+    # output.print_md("Available parameters from Excel: {}".format(", ".join(available_params)))
+    # output.print_md("Key parameter: {}".format(key_param_name))
+    # output.print_md("-" * 50)
     
     # Start transaction for parameter updates
     transaction = Transaction(doc, "Sync Parameters from Excel")
@@ -571,21 +571,21 @@ def sync_parameters_to_elements(doc, elements, excel_data_dict, key_param_name, 
             key_value = get_parameter_value_safely(element, key_param_name)
             
             if not key_value:
-                print("  Element {} has no value for key parameter '{}'".format(
+                output.print_md("  Element {} has no value for key parameter '{}'".format(
                     element.Id, key_param_name))
                 stats['warnings'] += 1
                 continue
             
             # Look up the element in Excel data
             if key_value not in excel_data_dict:
-                print("  Key '{}' not found in Excel data".format(key_value))
+                output.print_md("  Key '{}' not found in Excel data".format(key_value))
                 stats['warnings'] += 1
                 continue
             
             stats['matched'] += 1
             excel_row = excel_data_dict[key_value]
             
-            print("  Processing element {} with key '{}'".format(element.Id, key_value))
+            output.print_md("  Processing element {} with key '{}'".format(element.Id, key_value))
             
             # Update parameters for this element
             element_updated = False
@@ -600,10 +600,10 @@ def sync_parameters_to_elements(doc, elements, excel_data_dict, key_param_name, 
                 success, message = set_parameter_value_safely(element, param_name, excel_value, transaction)
                 
                 if success:
-                    print("    Set {}: '{}'".format(param_name, excel_value))
+                    output.print_md("    Set {}: '{}'".format(param_name, excel_value))
                     element_updated = True
                 else:
-                    print("    FAILED {}: {}".format(param_name, message))
+                    output.print_md("    FAILED {}: {}".format(param_name, message))
                     stats['errors'] += 1
             
             if element_updated:
@@ -625,49 +625,49 @@ def sync_parameters_to_elements(doc, elements, excel_data_dict, key_param_name, 
     output.print_md("Parameter errors: {}".format(stats['errors']))
     output.print_md("Warnings: {}".format(stats['warnings']))
 
-    """
-    Formats the data for output in the PyRevit window.
+    # """
+    # Formats the data for output in the PyRevit window.
     
-    Args:
-        data (list): List of lists containing cell data
+    # Args:
+    #     data (list): List of lists containing cell data
         
-    Returns:
-        str: Formatted output
-    """
-    if not data:
-        return "No data found."
+    # Returns:
+    #     str: Formatted output
+    # """
+    # if not excel_data_dict:
+    #     return "No data found."
     
-    # Calculate maximum column widths
-    max_widths = []
-    for row in data:
-        for i, cell in enumerate(row):
-            if i >= len(max_widths):
-                max_widths.append(0)
-            max_widths[i] = max(max_widths[i], len(str(cell)))
+    # # Calculate maximum column widths
+    # max_widths = []
+    # for row in excel_data_dict:
+    #     for i, cell in enumerate(row):
+    #         if i >= len(max_widths):
+    #             max_widths.append(0)
+    #         max_widths[i] = max(max_widths[i], len(str(cell)))
     
-    # Create formatted output
-    output_lines = []
+    # # Create formatted output
+    # output_lines = []
     
-    # Header separator line
-    separator = "+" + "+".join(["-" * (width + 2) for width in max_widths]) + "+"
-    output_lines.append(separator)
+    # # Header separator line
+    # separator = "+" + "+".join(["-" * (width + 2) for width in max_widths]) + "+"
+    # output_lines.append(separator)
     
-    # data rows
-    for i, row in enumerate(data):
-        formatted_row = "|"
-        for j, cell in enumerate(row):
-            width = max_widths[j] if j < len(max_widths) else 10
-            formatted_row += f" {str(cell):<{width}} |"
-        output_lines.append(formatted_row)
+    # # data rows
+    # for i, row in enumerate(excel_data_dict):
+    #     formatted_row = "|"
+    #     for j, cell in enumerate(row):
+    #         width = max_widths[j] if j < len(max_widths) else 10
+    #         formatted_row += f" {str(cell):<{width}} |"
+    #     output_lines.append(formatted_row)
         
-        # Separation line after the first line (header)
-        if i == 0 and len(data) > 1:
-            output_lines.append(separator)
+    #     # Separation line after the first line (header)
+    #     if i == 0 and len(excel_data_dict) > 1:
+    #         output_lines.append(separator)
     
-    # Final dividing line
-    output_lines.append(separator)
+    # # Final dividing line
+    # output_lines.append(separator)
     
-    return "\n".join(output_lines)
+    # return "\n".join(output_lines)
 
 def sp_url_to_local_path(sp_url, onedrive_base):
     """
@@ -806,10 +806,10 @@ def main():
             
             # Header printing
             output.print_md("Excel Parameter Synchronization")
-            output.print_md("(Local)File: {}".format(excel_file_local_path))
-            output.print_md("Named Range: {}".format(excel_rangename))
-            output.print_md("Key Parameter: {}".format(excel_keyname))
-            output.print_md("-" * 50)
+            # output.print_md("(Local)File: {}".format(excel_file_local_path))
+            # output.print_md("Named Range: {}".format(excel_rangename))
+            # output.print_md("Key Parameter: {}".format(excel_keyname))
+            # output.print_md("-" * 50)
             
             # reading data
             output.print_md("Reading Excel data...")
@@ -820,12 +820,12 @@ def main():
                 continue
             
             # Display Excel data info
-            output.print_md("Successfully read: {} Row(s), {} Column(s)".format(
-                len(data), len(data[0]) if data else 0))
+            # output.print_md("Successfully read: {} Row(s), {} Column(s)".format(
+                # len(data), len(data[0]) if data else 0))
             
             # Convert Excel data to lookup dictionary
             excel_lookup = convert_excel_data_to_dict(data, excel_keyname)
-            output.print_md("Excel lookup dictionary created with {} entries".format(len(excel_lookup)))
+            # output.print_md("Excel lookup dictionary created with {} entries".format(len(excel_lookup)))
             
             # Synchronize parameters
             output.print_md("Starting parameter synchronization...")
