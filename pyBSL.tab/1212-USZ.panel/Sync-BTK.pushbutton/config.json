@@ -10,8 +10,9 @@
         ]
     },
     "ParameterSync": [
-        {
-            "Order": "0",
+        {   
+            "Name": "BKT Wand",
+            "Order": "2",
             "Type": "Instance",
             "BuiltInCategory": "OST_Walls",
             "FileName": "https://christgantenbeincom.sharepoint.com/sites/1212_USZ/Shared%20Documents/General/00_Planliste%20Architektur%20Gesamt/USZ_MI12_00_GLG_LI_000002_Bauteilkatalog_Namenkonvention.xlsx",
@@ -19,28 +20,31 @@
             "KeyName": "BTK_ID"
         },
         {
+            "Name": "BKT Decken",
             "Order": "1",
             "Type": "Instance",
-            "BuiltInCategory": "OST_Walls",
+            "BuiltInCategory": "OST_Ceilings",
             "FileName": "https://christgantenbeincom.sharepoint.com/sites/1212_USZ/Shared%20Documents/General/00_Planliste%20Architektur%20Gesamt/USZ_MI12_00_GLG_LI_000002_Bauteilkatalog_Namenkonvention.xlsx",
-            "DataName": "Verkleidung_Sync",
+            "DataName": "Decken_Sync",
             "KeyName": "BTK_ID"
         },
         {
-            "Order": "2",
+            "Name": "BKT Boden",
+            "Order": "1",
             "Type": "Instance",
-            "BuiltInCategory": "OST_Walls",
+            "BuiltInCategory": "OST_Floors,OST_Ceilings",
             "FileName": "https://christgantenbeincom.sharepoint.com/sites/1212_USZ/Shared%20Documents/General/00_Planliste%20Architektur%20Gesamt/USZ_MI12_00_GLG_LI_000002_Bauteilkatalog_Namenkonvention.xlsx",
             "DataName": "Boden_Sync",
             "KeyName": "BTK_ID"
         },
         {
+            "Name": "Planliste",
             "Order": "3",
             "Type": "Instance",
-            "BuiltInCategory": "OST_Walls",
-            "FileName": "https://christgantenbeincom.sharepoint.com/sites/1212_USZ/Shared%20Documents/General/00_Planliste%20Architektur%20Gesamt/USZ_MI12_00_GLG_LI_000002_Bauteilkatalog_Namenkonvention.xlsx",
-            "DataName": "Decke_Sync",
-            "KeyName": "BTK_ID"
+            "BuiltInCategory": "OST_Sheets",
+            "FileName": "https://christgantenbeincom.sharepoint.com/sites/1212_USZ/Shared%20Documents/General/00_Planliste%20Architektur%20Gesamt/USZ_MI12_00_GLG_LI_000001_PLANLISTE_ARC_GESAMT.xlsx",
+            "DataName": "Data_Sync",
+            "KeyName": "Plan_ID"
         }
     ]
 }
