@@ -1,0 +1,74 @@
+<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:forms="clr-namespace:pyrevit.forms;assembly=pyrevit.forms"
+    Title="Create Legend by Filters"
+    Height="520" Width="335"
+    WindowStartupLocation="CenterScreen"
+    ResizeMode="NoResize"
+    x:Class="pyrevit.forms.WPFWindow"
+    TextOptions.TextFormattingMode="Display">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <forms:PyRevitResourceDictionary />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock Text="Select Views" FontSize="16" FontWeight="Bold" Margin="0,0,0,5" />
+            <TextBox x:Name="textbox_filter" TextChanged="UI_text_filter_updated" Margin="0,0,0,5" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                <CheckBox x:Name="UI_checkboax_views" Content="Views" IsChecked="True" Checked="UI_event_checked_views" Unchecked="UI_event_checked_views" Margin="0,0,10,0"/>
+                <CheckBox x:Name="UI_checkboax_view_templates" Content="ViewTemplates" IsChecked="True" Checked="UI_event_checked_views" Unchecked="UI_event_checked_views"/>
+            </StackPanel>
+            <ListBox x:Name="UI_ListBox_Views" Height="150" SelectionMode="Multiple" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1">
+            <TextBlock Text="Legend View" FontSize="16" FontWeight="Bold" Margin="0,0,0,5" />
+            <ComboBox x:Name="UI_legend_view" Height="25" Margin="0,0,0,10"/>
+            
+            <TextBlock Text="Text Type" FontSize="16" FontWeight="Bold" Margin="0,0,0,5" />
+            <ComboBox x:Name="UI_text_type" Height="25" Margin="0,0,0,10"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Margin="0,10,0,0">
+            <TextBlock Text="Filled Region Size (cm)" FontSize="16" FontWeight="Bold" Margin="0,0,0,5" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Width" HorizontalAlignment="Center"/>
+                    <TextBox x:Name="UI_region_width" Text="200" HorizontalContentAlignment="Center" Height="25" />
+                </StackPanel>
+                
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Height" HorizontalAlignment="Center"/>
+                    <TextBox x:Name="UI_region_height" Text="50" HorizontalContentAlignment="Center" Height="25" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="4">
+                    <TextBlock Text="Spacing" HorizontalAlignment="Center"/>
+                    <TextBox x:Name="UI_region_spacing" Text="10" HorizontalContentAlignment="Center" Height="25" />
+                </StackPanel>
+            </Grid>
+            
+            <Button x:Name="UI_Button_Run" Content="Create Legend" Click="button_run" Margin="0,15,0,0" Width="150" Height="25"/>
+        </StackPanel>
+    </Grid>
+</Window>
