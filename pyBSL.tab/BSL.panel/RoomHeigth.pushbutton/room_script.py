@@ -120,14 +120,14 @@ def main():
         print("Volume computations is off (Areas only). Please switch Areas and Volumes Computation on and re-run this script.")
         return
 
-    selection = [doc.GetElement(elId) for elId in uidoc.Selection.GetElementIds()]
+    selection = [doc.GetElement(elId) for elId in uidoc.Selection.GetElementIds() if doc.GetElement(elId).Category.BuiltInCategory == Bic.OST_Rooms]
 
     """if was a selection, use that, otherwise get all rooms"""
     if selection:
         rooms = selection
     else:
-        rooms = Fec(doc).OfCategory(Bic.OST_Rooms).WhereElementIsNotElementType().ToElements()
-
+        rooms = list(Fec(doc).OfCategory(Bic.OST_Rooms).WhereElementIsNotElementType().ToElements())
+    
     """check if we have rooms and the necessary parameters"""
     if not rooms:
         print("No rooms found.")
