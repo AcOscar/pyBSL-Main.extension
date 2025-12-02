@@ -43,11 +43,11 @@ if not selection.is_empty:
    
     EleNums = AllElements.Count 
     
-    print "Working with pre selected element(s)."
+    print ("Working with pre selected element(s).")
     
 else:
-    print "There was nothing preselected."
-    print "Try to work with all elements"
+    print ("There was nothing preselected.")
+    print ("Try to work with all elements")
     
     #ok catch all what we get
     AllElements =   FilteredElementCollector(revit.doc)\
@@ -56,7 +56,7 @@ else:
                     
     EleNums = AllElements.ToElementIds().Count         
 
-print EleNums
+print (EleNums)
 
 #try:
 calculator = SpatialElementGeometryCalculator(revit.doc)
@@ -67,20 +67,20 @@ transGroup.Start()
 for room in AllElements:
     
     if room.Area == 0 :
-        print "room not placed"
+        print ("room not placed")
         continue
         
     Geschoss = room.LookupParameter("Geschoss").AsString() 
     if Geschoss is None:
         Geschoss = ""
-        print "Geschoss is None!"
+        print ("Geschoss is None!")
     Teilobjekt = room.LookupParameter("Teilobjekt").AsString()
       
     if Teilobjekt is None:
         Teilobjekt = ""
-        print "Teilobjekt is None!"
+        print ("Teilobjekt is None!")
 
-    print output.linkify(room.Id) + " " + room.Number.ToString() + " "  + Geschoss + " " + Teilobjekt
+    print (output.linkify(room.Id) + " " + room.Number.ToString() + " "  + Geschoss + " " + Teilobjekt)
 
     ### Calculate a room's geometry and find its boundary faces
     results = calculator.CalculateSpatialElementGeometry(room)## compute the room geometry 
@@ -112,12 +112,11 @@ for room in AllElements:
 
             
 
-        print output.linkify(elemid) + " " + elem.Name 
-
+        print (output.linkify(elemid) + " " + elem.Name)
         elemparamGeschoss.Set(Geschoss)
         
         if elemparamTeilobjekt.AsString() == "MIT1":
-            print "keep MIT1"
+            print ("keep MIT1")
             continue
         elemparamTeilobjekt.Set(Teilobjekt)
         
