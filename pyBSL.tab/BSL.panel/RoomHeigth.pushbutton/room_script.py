@@ -33,11 +33,8 @@ DOWN = UP.Negate()
 
 BoundFace = namedtuple("BoundFace", "area height face")
 
-def clear_height_param_exists(any_room):
-    return any_room.LookupParameter(heigth_parameter_name)
-
-def clear_height_manual_param_exists(any_room):
-    return any_room.LookupParameter(manual_parameter_name)
+def room_param_exists(any_room, param_name):
+    return any_room.LookupParameter(param_name)
 
 def get_face_normal_and_mid_z(solid_face):
     mid_uv = UV(0.5, 0.5)
@@ -135,10 +132,10 @@ def main():
     if not rooms:
         print("No rooms found.")
         return
-    elif not clear_height_param_exists(rooms[0]):
+    elif not room_param_exists(rooms[0], heigth_parameter_name):
         print("The parameter " + heigth_parameter_name + " is necessary but does not exist. Please create them first.")
         return
-    elif not clear_height_manual_param_exists(rooms[0]):
+    elif not room_param_exists(rooms[0], manual_parameter_name):
         print("The parameter " + manual_parameter_name + " is necessary but does not exist. Please create them first.")
         return
     
