@@ -29,73 +29,31 @@ excel.AskToUpdateLinks = False
 excel.EnableEvents = False
 
 '-------------------------------------------------------------
-' Bei SharePoint: Datei lokal kopieren
+' Workbook öffnen (lokal/UNC oder SharePoint-URL)
 '-------------------------------------------------------------
-Dim workbook, tempFile, isSharePoint
-isSharePoint = False
-tempFile = ""
-
+Dim workbook
 If LCase(Left(inputPath, 4)) = "http" Then
-    isSharePoint = True
-    tempFile = fso.GetSpecialFolder(2) & "\" & fso.GetTempName() & ".xlsx" ' Temp-Ordner
-    
-    log.WriteLine Now & "  INFO  SharePoint-URL erkannt. Kopiere nach: " & tempFile
-    
     On Error Resume Next
-    ' XMLHttp für Download verwenden
-    Dim xhr
-    Set xhr = CreateObject("MSXML2.XMLHTTP")
-    xhr.Open "GET", inputPath, False
-    xhr.Send
-    
-    If Err.Number <> 0 Or xhr.Status <> 200 Then
-        log.WriteLine Now & "  ERROR  Download fehlgeschlagen: " & Err.Description & " Status=" & xhr.Status
-        WScript.Echo "Fehler beim Download der SharePoint-Datei."
+    Set workbook = excel.Workbooks.Open(inputPath, 0, True)
+    If Err.Number <> 0 Then
+        log.WriteLine Now & "  ERROR  Beim Öffnen (SharePoint): " & Err.Description
+        WScript.Echo "Fehler beim Öffnen der SharePoint-Datei: " & Err.Description
         On Error GoTo 0
         excel.Quit
         log.Close
         WScript.Quit 1
     End If
-    
-    ' Binärdaten in Datei schreiben
-    Dim stream
-    Set stream = CreateObject("ADODB.Stream")
-    stream.Type = 1 ' adTypeBinary
-    stream.Open
-    stream.Write xhr.ResponseBody
-    stream.SaveToFile tempFile, 2 ' adSaveCreateOverWrite
-    stream.Close
-    Set stream = Nothing
-    Set xhr = Nothing
     On Error GoTo 0
-    
-    log.WriteLine Now & "  INFO  Download abgeschlossen: " & tempFile
-    inputPath = tempFile ' Ab jetzt lokale Datei verwenden
+Else
+    If Not fso.FileExists(inputPath) Then
+        log.WriteLine Now & "  ERROR  Datei nicht gefunden: " & inputPath
+        WScript.Echo "Fehler! Datei '" & inputPath & "' nicht gefunden."
+        excel.Quit
+        log.Close
+        WScript.Quit 1
+    End If
+    Set workbook = excel.Workbooks.Open(inputPath)
 End If
-
-'-------------------------------------------------------------
-' Workbook öffnen (jetzt immer lokal)
-'-------------------------------------------------------------
-If Not fso.FileExists(inputPath) Then
-    log.WriteLine Now & "  ERROR  Datei nicht gefunden: " & inputPath
-    WScript.Echo "Fehler! Datei '" & inputPath & "' nicht gefunden."
-    excel.Quit
-    log.Close
-    WScript.Quit 1
-End If
-
-On Error Resume Next
-Set workbook = excel.Workbooks.Open(inputPath, 0, True)
-If Err.Number <> 0 Then
-    log.WriteLine Now & "  ERROR  Beim Öffnen: " & Err.Description
-    WScript.Echo "Fehler beim Öffnen der Datei: " & Err.Description
-    On Error GoTo 0
-    excel.Quit
-    log.Close
-    If isSharePoint And fso.FileExists(tempFile) Then fso.DeleteFile tempFile
-    WScript.Quit 1
-End If
-On Error GoTo 0
 
 '-------------------------------------------------------------
 ' Named Range auslesen
@@ -110,7 +68,6 @@ If Err.Number <> 0 Or namedRange Is Nothing Then
     workbook.Close False
     excel.Quit
     log.Close
-    If isSharePoint And fso.FileExists(tempFile) Then fso.DeleteFile tempFile
     WScript.Quit 1
 End If
 On Error GoTo 0
@@ -162,18 +119,6 @@ Set namedRange= Nothing
 Set workbook  = Nothing
 Set excel     = Nothing
 
-' Temp-Datei löschen falls vorhanden
-If isSharePoint And fso.FileExists(tempFile) Then
-    On Error Resume Next
-    fso.DeleteFile tempFile
-    If Err.Number = 0 Then
-        log.WriteLine Now & "  INFO  Temp-Datei gelöscht: " & tempFile
-    Else
-        log.WriteLine Now & "  WARN  Temp-Datei konnte nicht gelöscht werden: " & Err.Description
-    End If
-    On Error GoTo 0
-End If
-
 log.WriteLine Now & "  DONE"
 log.Close
 Set log = Nothing
@@ -212,7 +157,7 @@ Function ToCsvText(val, r, c, logger)
     End If
 
     ' Quotes maskieren
-    v = Replace(v, """", """""")
+    v = Replace(v, """", """""""")
     If Err.Number <> 0 Then
         logger.WriteLine Now & "  ERROR  Replace fehlgeschlagen in r=" & r & " c=" & c & " (Type=" & t & "): " & Err.Description
         Err.Clear

@@ -59,15 +59,15 @@ idx = 0
 
 output = script.get_output()
 
-rooms = Fec(doc).OfCategory(Bic.OST_Rooms).WhereElementIsNotElementType().ToElements()
+#rooms = Fec(doc).OfCategory(Bic.OST_Rooms).WhereElementIsNotElementType().ToElements()
 
-selection = [doc.GetElement(elId) for elId in uidoc.Selection.GetElementIds()]
+rooms = [doc.GetElement(elId) for elId in uidoc.Selection.GetElementIds()]
 
 #start transaction
 with db.Transaction("write room data"):
-    #if there was an slection we use them instead
-    if selection:
-        rooms = selection
+    #if there is no slection we use all rooms
+    if not rooms:
+        rooms = Fec(doc).OfCategory(Bic.OST_Rooms).WhereElementIsNotElementType().ToElements()
 
     #for the process bar on top
     EleNums = rooms.Count         
@@ -84,8 +84,6 @@ with db.Transaction("write room data"):
         forms.alert("The parameter " + room_source_parameter_name + " is necessary but does not exist. Please create them first.")
         script.exit()
             
-            
-                
     #room by room
     for room in rooms:
         
@@ -99,7 +97,6 @@ with db.Transaction("write room data"):
         if not room.Area > 0:
             continue
         
-    
         #there is a parameter that protects the room from being overwritten by this script
         #manual = room.LookupParameter(manual_room_materials_parameter_name).AsInteger()
 
@@ -116,7 +113,7 @@ with db.Transaction("write room data"):
             print(" Room number: " + room.Number + " " + output.linkify(room.Id) + " " + room_name)
 
         if source_parameter_value:
-            # Kopieren Sie den Wert in die Raum-Nummer
+            # write the value
             room.Number = source_parameter_value
 
         output.update_progress(idx, EleNums)

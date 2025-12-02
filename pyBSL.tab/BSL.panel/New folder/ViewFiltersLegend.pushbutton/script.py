@@ -5,7 +5,7 @@ from Autodesk.Revit.DB import Transaction, BuiltInCategory, ViewDuplicateOption,
 from System import Enum
 from System.Collections.Generic import List
 
-__title__ = 'ViewFilterLegend'
+__title__ = 'ViewFilterLegend Wall'
 __doc__ = 'Create a legend to all wall type filters from a view'
 
 doc = __revit__.ActiveUIDocument.Document
