@@ -12,15 +12,15 @@ from pyrevit import script
 #the second as yes/no to prevent the first one to overwrite it with this script
 #so we have the opportunity to write the height value manually
 
-heigth_parameter_name = "Lichte_Hoehe"
-manual_parameter_name = "Lichte_Hoehe_manuell"
+heigth_parameter_name = "clear height"
+manual_parameter_name = "clear height manually"
 
 __title__ = 'Room heights: weighted room srfs'
 
-__doc__ = "Runs through all rooms and calculate the room height between "\
-          "the largest lower surface and the largest upper surface of a room "\
-          "It will be write into the the parameter Lichte_Hoehe."\
-          "If there is a true/false parameter Lichte_Hoehe_manuell the value of Lichte_Hoehe will not be touched."\
+__doc__ = "Calculates the clear room height between the  "\
+          "largest lower surface and the largest upper surface of a room. "\
+          "The result is written to a parameter. "\
+          "Rooms for which a yes/no parameter is set are ignored."
 
 
 #set to True for more detailed messages
