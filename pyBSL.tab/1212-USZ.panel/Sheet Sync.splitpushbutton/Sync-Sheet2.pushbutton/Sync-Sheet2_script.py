@@ -936,6 +936,7 @@ def main():
     # output.print_md("Auswahl: {}".format (choice))
 
     try:
+        output.print_md(PARAM_NAME)
         cfg_raw = read_json_from_project_param(doc, PARAM_NAME)
         cfg = validate_config(cfg_raw)
     except Exception as e:

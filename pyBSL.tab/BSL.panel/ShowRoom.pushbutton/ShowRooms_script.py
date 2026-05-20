@@ -49,11 +49,11 @@ class RoomHighlightWindow(WPFWindow):
             self.uidoc.RefreshActiveView()
 
     def highlight_button_click(self, sender, e):
-        """Event Handler Highlight Button (unterstützt einzelne und kommagetrennte Raumnummern)."""
+        """Event Handler Highlight Button (supports single and comma-separated room numbers)."""
         try:
             raw_input = (self.room_number_input.Text or "").strip()
             if not raw_input:
-                self.status_text.Text = "Bitte mindestens eine Raumnummer eingeben."
+                self.status_text.Text = "Please enter at least one room number."
                 return
 
             # Input: “101, 102, 103” -> {“101”, ‘102’, “103”}
@@ -66,7 +66,7 @@ class RoomHighlightWindow(WPFWindow):
             ]
 
             if not requested_numbers:
-                self.status_text.Text = "Bitte gültige Raumnummern eingeben."
+                self.status_text.Text = "Please enter valid room numbers."
                 return
 
             requested_set = set(requested_numbers)
@@ -77,7 +77,7 @@ class RoomHighlightWindow(WPFWindow):
                 .OfCategory(self.DB.BuiltInCategory.OST_Rooms)
                 .WhereElementIsNotElementType()
             )
-            print (requested_set)
+            #print (requested_set)
             rooms_to_highlight = []
             found_numbers = set()
 
@@ -95,9 +95,10 @@ class RoomHighlightWindow(WPFWindow):
                     # Performance: Once we have found all requested numbers, do not continue running through the model.
                     if len(found_numbers) == len_requested:
                         break
+                        
 
             if not rooms_to_highlight:
-                self.status_text.Text = "Keiner der angegebenen Räume wurde im Modell gefunden."
+                self.status_text.Text = "None of the rooms listed were found in the model."
                 return
             print (rooms_to_highlight)
             # Create mesh for all found rooms
@@ -112,7 +113,7 @@ class RoomHighlightWindow(WPFWindow):
                 meshes.append(colored_mesh)
 
             if not meshes:
-                self.status_text.Text = "Für die gefundenen Räume konnte keine Geometrie erzeugt werden."
+                self.status_text.Text = "No geometry could be generated for the rooms found."
                 return
             
             bigmesh = self.build_big_mesh(meshes)
@@ -122,16 +123,64 @@ class RoomHighlightWindow(WPFWindow):
             missing = requested_set - found_numbers
             if missing:
                 self.status_text.Text = (
-                    "Es wurden {found} Räume hervorgehoben. "
-                    "Nicht gefunden: {missing}"
+                    "{found} rooms were highlighted. "
+                    "Not found: {missing}"
                 ).format(
                     found=len(found_numbers),
                     missing=", ".join(sorted(missing)),
                 )
             else:
                 self.status_text.Text = (
-                    "Es wurden {found} Räume hervorgehoben."
+                    "{found} rooms were highlighted.."
                 ).format(found=len(found_numbers))
+
+        except Exception as ex:
+            self.status_text.Text = "Error: {}".format(str(ex))
+            self.logger.error("Error when highlighting: {}".format(ex))
+
+
+    def all_button_click(self, sender, e):
+        """Event Handler Highlight Button all rooms."""
+        try:
+            self.status_text.Text = "All rooms will be displayed."
+            # Collect all rooms once, but only remember the relevant ones.
+            collector = (
+                self.DB.FilteredElementCollector(self.doc)
+                .OfCategory(self.DB.BuiltInCategory.OST_Rooms)
+                .WhereElementIsNotElementType()
+            )
+            
+            rooms_to_highlight = []
+
+            for room in collector:
+                #rooms where not placed as 0 area
+                if not room.Area > 0:
+                    continue
+                rooms_to_highlight.append(room)
+
+
+
+            if not rooms_to_highlight:
+                self.status_text.Text = "There are no (placed) rooms in the model."
+                return
+            #print (rooms_to_highlight)
+            # Create mesh for all found rooms
+            meshes = []
+            for room in rooms_to_highlight:
+                room_solid = self.get_room_solid(room)
+                if not room_solid:
+                    continue
+
+                room_mesh = self.create_preview_mesh_from_solid(room_solid)
+                colored_mesh = self.recolor_mesh(room_mesh)
+                meshes.append(colored_mesh)
+
+            if not meshes:
+                self.status_text.Text = "No geometry could be generated for the rooms found."
+                return
+            
+            bigmesh = self.build_big_mesh(meshes)
+            self.show_preview_mesh(bigmesh)
 
         except Exception as ex:
             self.status_text.Text = "Error: {}".format(str(ex))
@@ -171,7 +220,7 @@ class RoomHighlightWindow(WPFWindow):
                 self.show_preview_mesh(colored_mesh)
                 self.status_text.Text = "Room ‘{}’ has been highlighted!".format(room_number_to_find)
             else:
-                self.status_text.Text = "Raum '{}' wurde nicht gefunden!".format(room_number_to_find)
+                self.status_text.Text = "Room '{}' could not be found!".format(room_number_to_find)
         
         except Exception as ex:
             self.status_text.Text = "Error: {}".format(str(ex))

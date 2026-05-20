@@ -49,23 +49,30 @@
                     HorizontalAlignment="Center"
                     Margin="0,15,0,0">
             
+            <Button x:Name="all_button" 
+                    Content="All Rooms" 
+                    Width="80" 
+                    Height="30"
+                    Margin="0,0,10,0"
+                    Click="all_button_click"/>
+
             <Button x:Name="highlight_button" 
                     Content="Highlight" 
-                    Width="110" 
+                    Width="80" 
                     Height="30"
                     Margin="0,0,10,0"
                     Click="highlight_button_click"/>
             
             <Button x:Name="clear_button" 
                     Content="Clear Preview" 
-                    Width="110" 
+                    Width="80" 
                     Height="30"
                     Margin="0,0,10,0"
                     Click="clear_button_click"/>
             
             <Button x:Name="close_button" 
                     Content="Close" 
-                    Width="110" 
+                    Width="80" 
                     Height="30"
                     Click="close_button_click"/>
         </StackPanel>

@@ -7,7 +7,7 @@ from Autodesk.Revit.DB import BuiltInCategory
 from pyrevit import forms
 
 import codecs
-import os, time, csv, re, sys, collections, datetime
+import os, time, csv, re, sys, collections, datetime, tempfile
 import Autodesk.Revit.DB as rdb
 
 __title__ = 'Sync sheet'
@@ -250,6 +250,31 @@ excel_keyname = get_str_param(project_info, 'ExcelReader-KeyName')
 if not excel_filename or not excel_rangename or not excel_keyname:
     print("Project parameters missing! Please add the paramters ExcelReader-FileName, ExcelReader-DataName and ExcelReader-KeyName as text parameters to the projectinformations.")
     sys.exit()
+
+# Prüfen ob eine lokale Kopie im Download-Ordner des aktuellen Benutzers existiert
+excel_basename = os.path.basename(excel_filename)
+downloads_folder = os.path.join(os.path.expanduser("~"), "Downloads")
+local_excel_path = os.path.join(downloads_folder, excel_basename)
+
+using_offline_copy = False
+if os.path.exists(local_excel_path):
+    # Original nicht erreichbar, lokale Kopie verwenden
+    using_offline_copy = True
+
+if using_offline_copy:
+    mod_timestamp = os.path.getmtime(local_excel_path)
+    mod_time_str = datetime.datetime.fromtimestamp(mod_timestamp).strftime("%d.%m.%Y %H:%M:%S")
+    forms.alert(
+        "Attention: The OFFLINE version of the Excel file is being used!\n\n"
+        "File: {}\n"
+        "Saved on: {}\n\n"
+        "Make sure that this file is up to date.\n\n"
+        "Delete the file from your Download folder, when you like to use the online version.".format(local_excel_path, mod_time_str),
+        title="Offline file detected",
+        warn_icon=True
+    )
+    excel_filename = local_excel_path
+
 print ("File: {}\nRange: {}\nKeyName: {}".format(excel_filename, excel_rangename, excel_keyname))
 
 #if not os.path.exists(excel_filename):
@@ -261,12 +286,17 @@ print ("File: {}\nRange: {}\nKeyName: {}".format(excel_filename, excel_rangename
     
 #fileCsvDrawinglist = os.path.dirname(excel_filename) + r'\temp-drawing-list.csv'
 
+
 temp_dir = os.environ.get('TEMP')
+#temp_dir = os.path.realpath(tempfile.gettempdir())
+#temp_dir = os.path.dirname(temp_dir)
+
+print (temp_dir)
 
 fileCsvDrawinglist = os.path.join(temp_dir,'temp-drawing-list.csv')
 print (fileCsvDrawinglist)
 batch_file = '{}'.format(os.path.dirname(__file__) + '\convert3.bat')
-
+print (batch_file, excel_filename, excel_rangename, fileCsvDrawinglist)
 # Convert xls to temp csv files.
 os.system('"{}" "{}" "{}" "{}"'.format(batch_file, excel_filename, excel_rangename, fileCsvDrawinglist))
 
