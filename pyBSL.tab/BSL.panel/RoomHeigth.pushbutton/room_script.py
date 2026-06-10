@@ -14,6 +14,16 @@ we need two parameters
 one in which we write the room height
 the second as Yes/No to prevent the first from overwriting it with this script
 this gives us the option of writing the height value manually
+
+───────┐ ┌──────────── 
+       └─┘
+        ▲
+        |
+        | clear height
+        |
+        ▼
+─────────────┐ ┌──────
+             └─┘
 """
 
 heigth_parameter_name = "clear height"
