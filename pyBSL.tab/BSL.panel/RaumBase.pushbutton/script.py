@@ -6,6 +6,12 @@ from rpw import db, doc, uidoc
 
 finish_floor_elevation_param_name = "Raum_OKFB"
 
+
+__title__ = 'Room finish floor heigth in Project Absolute'
+
+__doc__ = "Calculates the height of the finished floor " \
+            "as an absolute value relative to sea level"
+
 def convert_and_format(length_in_internal_units, Format=True):
     """Convert length from internal units to project units and format as string."""
  
@@ -51,6 +57,7 @@ def get_room_finish_floor_elevation(level, elevation_offset):
     level_elevation = level.Elevation  # Get level elevation in internal units (feet)
     level_elevation = UnitUtils.ConvertFromInternalUnits(level_elevation, SpecTypeId.Length)  
     elevation_relative_to_pbp = level_elevation - elevation_offset  # Adjust relative to project base point
+    elevation_relative_to_pbp = level_elevation - elevation_offset  # Calculate difference in internal units
     return elevation_relative_to_pbp
 
 def main():

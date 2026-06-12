@@ -3,6 +3,7 @@
 import clr
 from pyrevit import revit
 from pyrevit import script
+from pyrevit.coreutils import logger
 from Autodesk.Revit.DB import TransactionGroup
 from Autodesk.Revit.DB import XYZ, ElementTransformUtils
 from rpw import db, doc, uidoc
@@ -26,14 +27,15 @@ __doc__ = 'Replace '\
           'on her level'
 
 output = script.get_output()
+mlogger = logger.get_logger(__name__)
 
 def get_all_room_tags(all_tags=None):
     
     room_tags = {}
-    print("Caching room tags...")
-    print("Total tags found: {}".format(len(all_tags)))
+    mlogger.info("Caching room tags...")
+    mlogger.info("Total tags found: {}".format(len(all_tags)))
     for tag in all_tags:
-        print("Checking tag: {} in view {}".format(tag.Id, doc.GetElement(tag.OwnerViewId).Name))
+        mlogger.info("Checking tag: {} in view {}".format(tag.Id, doc.GetElement(tag.OwnerViewId).Name))
         
         tagged_room = None
         
@@ -51,7 +53,7 @@ def get_all_room_tags(all_tags=None):
                 pass
                 
         if tagged_room and hasattr(tagged_room, "Id"):
-            print("Found tag for room: {}".format(tagged_room.Id))
+            mlogger.info("Found tag for room: {}".format(tagged_room.Id))
             r_id = tagged_room.Id.IntegerValue
             if r_id not in room_tags:
                 room_tags[r_id] = []
@@ -111,10 +113,10 @@ def unplace_room_safely(doc, room, pinned):
     
     if pinned:
         room.Pinned = False 
-        print("Unpinned room: {}".format(room.Id))
+        mlogger.info("Unpinned room: {}".format(room.Id))
 
     room.Unplace()
-    print("Unplaced room: {}".format(room.Id))
+    mlogger.info("Unplaced room: {}".format(room.Id))
     t_unplace.Commit()
 
 
@@ -157,13 +159,13 @@ def restore_tags(doc, newRoom, room_tags_info):
                 try:
                     new_tag.LeaderEnd = t_info['elbow_end']
                 except Exception as e:
-                    print("Could not set leader end: {}".format(e)) 
+                    mlogger.warning("Could not set leader end: {}".format(e)) 
             
             if t_info['has_leader'] and t_info.get('elbow') and hasattr(new_tag, "LeaderElbow"):
                 try:
                     new_tag.LeaderElbow = t_info['elbow']
                 except Exception as e:
-                    print("Could not set leader elbow: {}".format(e))
+                    mlogger.warning("Could not set leader elbow: {}".format(e))
 
             if t_info['orientation'] is not None and hasattr(new_tag, "TagOrientation"):
                 new_tag.TagOrientation = t_info['orientation']
@@ -182,7 +184,7 @@ def restore_tags(doc, newRoom, room_tags_info):
                     except Exception:
                         pass
 
-            print("Restored tag in view: {}".format(view.Name))
+            mlogger.info("Restored tag in view: {}".format(view.Name))
 
 
 def main():
@@ -196,14 +198,14 @@ def main():
     base_level = active_view.GenLevel
     
     if not base_level:
-        print("Fehler: Die aktuelle Ansicht hat keine verknuepfte Ebene (z.B. 3D-Ansicht).")
+        mlogger.error("Fehler: Die aktuelle Ansicht hat keine verknuepfte Ebene (z.B. 3D-Ansicht).")
         return
 
     rooms = get_rooms_to_process(revit.doc, uidoc, active_view)
 
     """check if we have rooms and the necessary parameters"""
     if not rooms:
-        print("No rooms found.")
+        mlogger.warning("No rooms found.")
         return
 
     EleNums = len(rooms)         
@@ -215,9 +217,9 @@ def main():
 
 
     for room in rooms:
-        print (output.linkify(room.Id))
+        mlogger.info(output.linkify(room.Id))
         if room.Area == 0:
-            print("Room {} has zero area, skipping.".format(room.Id))
+            mlogger.warning("Room {} has zero area, skipping.".format(room.Id))
             continue
         
         rmPT = room.Location
@@ -260,7 +262,7 @@ def main():
                     auto_tag_ids = [t_id for t_id in tags_after_ids if t_id not in tags_before_ids]
                     if auto_tag_ids:
                         revit.doc.Delete(List[ElementId](auto_tag_ids))
-                        print("Entferne {} automatisch platzierten Tag(s).".format(len(auto_tag_ids)))
+                        mlogger.info("Entferne {} automatisch platzierten Tag(s).".format(len(auto_tag_ids)))
 
                     if upper_level_id and upper_level_id.IntegerValue != -1:
                         newRoom.get_Parameter(Bip.ROOM_UPPER_LEVEL).Set(upper_level_id)
@@ -269,7 +271,7 @@ def main():
                     ElementTransformUtils.MoveElement(revit.doc, newRoom.Id, move)
                     if pinned:
                         newRoom.Pinned = pinned
-                    print("Created new room: {}".format(newRoom.Id))
+                    mlogger.info("Created new room: {}".format(newRoom.Id))
                     
                     # Gespeicherte Raumbeschriftungen wiederherstellen
                     restore_tags(revit.doc, newRoom, room_tags_info)
@@ -283,7 +285,7 @@ def main():
 
     output.reset_progress()
 
-    print('Done')
+    mlogger.info('Done')
 
 if __name__ == "__main__":
     """Run main and catch exceptions to print them in the output window."""
@@ -291,5 +293,5 @@ if __name__ == "__main__":
         main()
     except Exception as e:        
         import traceback
-        print("ERROR:", e)
-        print(traceback.format_exc())
+        mlogger.error("ERROR: {}".format(e))
+        mlogger.error(traceback.format_exc())
