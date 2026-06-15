@@ -10,7 +10,7 @@ from pyrevit import script
 
 stopwatch = Stopwatch()
 stopwatch.Start()
-output = script.get_output()
+#output = script.get_output()
 
 """settings"""
 """
@@ -26,6 +26,8 @@ window_area_param = "Fensterflaeche_Tag"
 
 
 room_offset = -0.3  # offset from window center to room in meters
+
+logger = script.get_logger() # Initialisiert den Logger
 
 def get_inked_instance_by_name(name):
     """Get Revit link instance by name."""
@@ -128,19 +130,19 @@ def main():
                         glasflaeche = glazingarea_param.AsDouble()
                         roomSum += glasflaeche
                     else:
-                        print("Window {} does not have a valid '{}'".format(output.linkify(window.Id), glazingarea_param_name))
+                        logger.info("Window {} does not have a valid '{}'".format(output.linkify(window.Id), glazingarea_param_name))
                 except Exception as e:
-                    print("Error at window {}: {}".format(window.Id,e))
+                    logger.error("Error at window {}: {}".format(window.Id,e))
             sumStr = str(round(roomSum, 2)) 
             param = room.LookupParameter(window_area_param)
             
             if param:
                 param.Set(roomSum)
             else:
-                print("Room {} has no parameter '{}'".format(room.Id,window_area_param))
+                logger.info("Room {} has no parameter '{}'".format(room.Id,window_area_param))
 
     stopwatch.Stop()
-    print("WindowAreaPerRoom run in: {}" .format (stopwatch.Elapsed))
+    logger.info("WindowAreaPerRoom run in: {}" .format (stopwatch.Elapsed))
 
 if __name__ == "__main__":
     """Run main and catch exceptions to print them in the output window."""
@@ -148,5 +150,5 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         import traceback
-        print("ERROR:", e)
-        print(traceback.format_exc())
+        logger.error("ERROR:", e)
+        logger.error(traceback.format_exc())
