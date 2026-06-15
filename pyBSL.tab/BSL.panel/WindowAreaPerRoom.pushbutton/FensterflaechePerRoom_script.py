@@ -6,21 +6,24 @@ from rpw.db import Transaction as rpw_Transaction
 from pyrevit import script
 
 
+from Autodesk.Revit.DB import UnitTypeId, UnitUtils
+
 stopwatch = Stopwatch()
 stopwatch.Start()
 output = script.get_output()
+logger = script.get_logger() # Initialisiert den Logger
 
-ToRoom = []
 exclude_param = "Fensterflaeche_Exklusion"
 glazingarea_param = "Glasflaeche"
 instW = "Width"
 fflaeche_param = "Fensterflaeche_Tag"
+
+ToRoom = []
 filtered_windows = []
 w2calc = []
 fromRoomId = []
 fromRoom = []
 wRoomSet = []
-cnvrt = 3.280
 
 def main():
 
@@ -91,14 +94,14 @@ def main():
                         glasflaeche_param = window.Symbol.LookupParameter(glazingarea_param)
                         
                     if glasflaeche_param and glasflaeche_param.HasValue:
-                        glasflaeche = glasflaeche_param.AsDouble() / (cnvrt ** 2)  # Fuß² in m² umrechnen
+                        glasflaeche = round(UnitUtils.ConvertFromInternalUnits(glasflaeche_param.AsDouble(), UnitTypeId.SquareMeters), 2) # Konvertieren Squarefeet in Quadratmeter nötig
                         roomSum += glasflaeche
                     else:
-                        print("Fenster {} hat keine gültige {}".format(output.linkify(window.Id), glazingarea_param))
+                        logger.info("Fenster {} hat keine gültige {}".format(output.linkify(window.Id), glazingarea_param))
                 except Exception as e:
-                    print("Fehler bei Fenster {}: {}".format(window.Id,e))
+                    logger.error("Fehler bei Fenster {}: {}".format(window.Id,e))
 
-            #print([room.Id.IntegerValue, roomSum])
+    
             # Ergebnis in Textform formatieren
             sumStr = str(round(roomSum, 2)) + " m²"
 
@@ -107,14 +110,12 @@ def main():
             if param:
                 param.Set(sumStr)
             else:
-                #print("Raum {room.Id} hat keinen Parameter '{fflaeche_param}'")
-                print("Raum {} hat keinen Parameter {}".format(room.Id,fflaeche_param))
+                logger.info("Raum {} hat keinen Parameter {}".format(room.Id,fflaeche_param))
 
-    print("FensterflaechePerRoom run in: ")
     stopwatch.Stop()
     timespan = stopwatch.Elapsed
+    logger.info("FensterflaechePerRoom run in:  {} ".format(timespan))
 
-    print (timespan)
 
 if __name__ == "__main__":
     """Run main and catch exceptions to print them in the output window."""
@@ -122,5 +123,5 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         import traceback
-        print("ERROR:", e)
-        print(traceback.format_exc())
+        logger.error("ERROR:", e)
+        logger.error(traceback.format_exc())

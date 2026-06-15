@@ -10,7 +10,7 @@ from pyrevit import script
 
 stopwatch = Stopwatch()
 stopwatch.Start()
-#output = script.get_output()
+output = script.get_output()
 
 """settings"""
 """
