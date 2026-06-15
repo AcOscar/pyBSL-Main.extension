@@ -11,7 +11,7 @@ from Autodesk.Revit.DB import FilteredElementCollector as Fec
 from Autodesk.Revit.DB import BuiltInCategory as Bic
 from Autodesk.Revit.DB import BuiltInParameter as Bip
 from Autodesk.Revit.DB import Transaction, IFailuresPreprocessor, FailureProcessingResult, FailureSeverity
-from Autodesk.Revit.DB import Reference, IndependentTag, TagMode, TagOrientation, UV, LinkElementId, ElementId, Line
+from Autodesk.Revit.DB import UV, LinkElementId, ElementId, Line
 from System.Collections.Generic import List
 
 class SuppressWarnings(IFailuresPreprocessor):
@@ -22,12 +22,11 @@ class SuppressWarnings(IFailuresPreprocessor):
         return FailureProcessingResult.Continue
 
         
-__doc__ = 'Replace '\
-          'rooms '\
-          'on her level'
-
+__doc__ = 'Unplace all rooms from current view'\
+          'and replace them with the associated level of the current view.'
+         
 output = script.get_output()
-mlogger = logger.get_logger(__name__)
+mlogger = logger.get_logger('Room Replace')
 
 def get_all_room_tags(all_tags=None):
     
@@ -191,7 +190,7 @@ def main():
 
     idx = 0
 
-    transGroup = TransactionGroup(revit.doc, "pyScript replace Rooms")
+    transGroup = TransactionGroup(revit.doc, "pyScript replace rooms")
     transGroup.Start()
 
     active_view = uidoc.ActiveView

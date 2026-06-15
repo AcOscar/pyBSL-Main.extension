@@ -5,20 +5,15 @@ from Autodesk.Revit.DB import BuiltInCategory as Bic
 from Autodesk.Revit.DB import AreaVolumeSettings 
 from Autodesk.Revit.DB import SpatialElementBoundaryOptions
 from Autodesk.Revit.DB import CheckoutStatus, WorksharingUtils
-from Autodesk.Revit.DB import BuiltInParameter, HostObjectUtils, HostObject
+from Autodesk.Revit.DB import BuiltInParameter
 from Autodesk.Revit.DB import SpatialElementGeometryCalculator, SpatialElementType
 
 from System.Diagnostics import Stopwatch
-from System.Collections.Generic import List
 
 from rpw import db, doc, uidoc
 from pyrevit import script, DB, forms
-from Autodesk.Revit.DB import BuiltInParameter
 from Autodesk.Revit.DB.Architecture import Room
-#we need two parameters
-#one as length to write the roomheigth
-#the second as yes/no to prevent the first one to overwrite it with this script
-#so we have the opportunity to write the height value manually
+
 
 #this is the destination parameter name
 room_parameter_name_wall_materials =    "11200 Materialis. Wand/Oberfl."
@@ -220,7 +215,8 @@ with db.Transaction("write room data"):
                     continue
                 
                 if SetWalls and myfinish[0][i] == "Side":
-                    if DEBUG: print myfinishobj.ElementID
+                    if DEBUG:
+                        print(myfinishobj.ElementID)
                     wall_mat = myfinishobj.LookupParameter(wall_material_parameter_name)
                     if wall_mat.HasValue:
                         wall_mat_str.add(wall_mat.AsString())
